@@ -32,7 +32,7 @@ jobs:
 
     - name: 執行 Python 抓取腳本
       env:
-        FINNHUB_API_KEY: ${{ secrets::FINNHUB_API_KEY }} # 注入保險箱裡的 API Key
+        FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }} # 注入保險箱裡的 API Key
       run: python fetch_sox.py
 
     - name: 將更新後的 SQLite 資料庫推回 GitHub
