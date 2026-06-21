@@ -22,10 +22,19 @@ cursor = conn.cursor()
 # 建立個股明細表
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS stock_daily_metrics (
-        date TEXT, ticker TEXT, price REAL, marketcap REAL, pefwd REAL, fwdPEG REAL,
+        date TEXT, ticker TEXT, price REAL, marketcap REAL, pefwd REAL,
         PRIMARY KEY (date, ticker)
     )
 ''')
+
+# 💡 自動相容舊資料庫：如果發現舊表沒有 fwdPEG 欄位，自動 ALTER TABLE 追加欄位
+try:
+    cursor.execute("ALTER TABLE stock_daily_metrics ADD COLUMN fwdPEG REAL")
+    conn.commit()
+except sqlite3.OperationalError:
+    # 如果欄位已經存在，會拋出錯誤，直接忽略即可
+    pass
+
 # 建立組合加權總覽表
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS portfolio_summary (
