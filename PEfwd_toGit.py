@@ -22,7 +22,7 @@ cursor = conn.cursor()
 # 建立個股明細表
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS stock_daily_metrics (
-        date TEXT, ticker TEXT, price REAL, marketcap REAL, pefwd REAL,
+        date TEXT, ticker TEXT, price REAL, marketcap REAL, pefwd REAL, fwdPEG REAL,
         PRIMARY KEY (date, ticker)
     )
 ''')
@@ -51,11 +51,12 @@ for ticker in sox_29_tickers:
         price = quote_res.get("c")
         market_cap = metrics.get("marketCapitalization")
         pe_fwd = metrics.get("forwardPE")
+        peg_fwd = metrics.get("forwardPEG")
         
         if market_cap:
             total_market_cap += float(market_cap)
             
-        raw_data.append((current_date, ticker, price, market_cap, pe_fwd))
+        raw_data.append((current_date, ticker, price, market_cap, pe_fwd, peg_fwd))
     except Exception as e:
         print(f"[{ticker}] 抓取失敗: {e}")
 
@@ -65,13 +66,14 @@ weighted_pefwd_sum = 0.0
 for row in raw_data:
     # 寫入個股明細 (若當天重複執行會自動覆蓋)
     cursor.execute('''
-        INSERT OR REPLACE INTO stock_daily_metrics (date, ticker, price, marketcap, pefwd)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT OR REPLACE INTO stock_daily_metrics (date, ticker, price, marketcap, pefwd, fwdPEG)
+        VALUES (?, ?, ?, ?, ?, ?)
     ''', row)
     
     # 計算單檔加權貢獻
     mcap = row[3]
     pe_fwd = row[4]
+    
     if mcap and pe_fwd and total_market_cap > 0:
         weight = float(mcap) / total_market_cap
         weighted_pefwd_sum += weight * float(pe_fwd)
